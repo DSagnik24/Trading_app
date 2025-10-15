@@ -1,11 +1,15 @@
 package com.Sagnik.Trading_App.config;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
 
 public class JwtTokenValidator extends OncePerRequestFilter {
@@ -18,6 +22,17 @@ public class JwtTokenValidator extends OncePerRequestFilter {
             jwt = jwt.substring(7);
 
             try{
+                SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECREAT_KEY.getBytes());
+
+                Claims claims = Jwts.parser()
+                        .setSigningKey(key)
+                        .build()
+                        .parseClaimsJws(jwt)
+                        .getBody();
+
+                String email = String.valueOf(claims.get("email"));
+
+                String authorities = String.valueOf(claims.get("authorities"));
 
             } catch (Exception e) {
                 throw new RuntimeException("Invalid Token..");
