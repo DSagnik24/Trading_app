@@ -16,7 +16,7 @@ public class JwtProvider {
 
     private static SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECREAT_KEY.getBytes());
 
-    public static String generateToker(Authentication auth){
+    public static String generateToken(Authentication auth){
         Collection<?extends GrantedAuthority >authorities = auth.getAuthorities();
         String roles = populateAuthorities(authorities);
         String jwt = Jwts.builder()
@@ -47,4 +47,6 @@ public class JwtProvider {
         }
         return String.join(",",auth);
     }
+
+
 }
