@@ -1,10 +1,15 @@
 package com.Sagnik.Trading_App.Controller;
 
 import com.Sagnik.Trading_App.Model.User;
+import com.Sagnik.Trading_App.Response.AuthResponse;
+import com.Sagnik.Trading_App.config.JwtProvider;
 import com.Sagnik.Trading_App.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +23,13 @@ public class AuthController {
     private UserRepository userRepository;
 
     @PostMapping("/signUp")
-    public ResponseEntity<User> register(@RequestBody User user){
+    public ResponseEntity<AuthResponse> register(@RequestBody User user) throws Exception {
+
+        User isEmailExist = UserRepository.findByEmail(user.getEmail());
+
+        if(isEmailExist != null){
+            throw new Exception("email is already user with another account.");
+        }
 
         User newUser = new User();
         newUser.setEmail(user.getEmail());
@@ -28,6 +39,19 @@ public class AuthController {
 
         User savedUser = userRepository.save(newUser);
 
-        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+        Authentication auth =new UsernamePasswordAuthenticationToken(
+                user.getEmail(),
+                user.getPassword());
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        String jwt = JwtProvider.generateToker(auth);
+
+        AuthResponse res = new AuthResponse();
+        res.setJwt(jwt);
+        res.setStatus(true);
+        res.setMessage("register success");
+
+        return new ResponseEntity<>(res, HttpStatus.CREATED);
     }
 }
