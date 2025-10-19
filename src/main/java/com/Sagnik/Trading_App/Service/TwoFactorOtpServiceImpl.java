@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -37,16 +38,17 @@ public class TwoFactorOtpServiceImpl implements TwoFactorOtpService{
 
     @Override
     public TwoFactorOTP findById(String id) {
-        return null;
+        Optional<TwoFactorOTP> otp = twoFactorOtpRepository.findById(id);
+        return otp.orElse(null);
     }
 
     @Override
     public boolean verifyTwoFactorOtp(TwoFactorOTP twoFactorOTP, String otp) {
-        return false;
+        return twoFactorOTP.getOtp().equals(otp);
     }
 
     @Override
     public void deleteTwoFactorOtp(TwoFactorOTP twoFactorOTP) {
-
+        twoFactorOtpRepository
     }
 }

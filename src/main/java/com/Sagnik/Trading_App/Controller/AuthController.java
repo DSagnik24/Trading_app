@@ -1,8 +1,11 @@
 package com.Sagnik.Trading_App.Controller;
 
+import com.Sagnik.Trading_App.Model.TwoFactorOTP;
 import com.Sagnik.Trading_App.Model.User;
 import com.Sagnik.Trading_App.Response.AuthResponse;
 import com.Sagnik.Trading_App.Service.CustomUserDetailsService;
+import com.Sagnik.Trading_App.Service.TwoFactorOtpService;
+import com.Sagnik.Trading_App.Utils.OtpUtils;
 import com.Sagnik.Trading_App.config.JwtProvider;
 import com.Sagnik.Trading_App.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,10 @@ public class AuthController {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
+    @Autowired
+    private TwoFactorOtpService twoFactorOtpService;
+
+
     @PostMapping("/signUp")
     public ResponseEntity<AuthResponse> register(@RequestBody User user) throws Exception {
 
@@ -51,6 +58,28 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         String jwt = JwtProvider.generateToken(auth);
+
+        User authUser = userRepository.findByEmail(user.getFullName());
+
+        if(user.getTwoFactorAuth().isEnabled()){
+            AuthResponse res = new AuthResponse();
+            res.setMessage("Two factor auth is enabled");
+            res.setTwoFactorAuthEnabled(true);
+            String otp = OtpUtils.generatedOTP();
+
+            TwoFactorOTP oldTwoFactorOTP = twoFactorOtpService.findByUser(authUser.getId());
+            if(oldTwoFactorOTP != null){
+                twoFactorOtpService.deleteTwoFactorOtp(oldTwoFactorOTP);
+            }
+
+            TwoFactorOTP newTwoFactorOTP = twoFactorOtpService.createTwoFactorOtp(
+                    authUser,otp,jwt);
+
+
+            res.setSession(newTwoFactorOTP.getId());
+            return new ResponseEntity<>(res,HttpStatus.ACCEPTED);
+
+        }
 
         AuthResponse res = new AuthResponse();
         res.setJwt(jwt);
